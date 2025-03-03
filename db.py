@@ -7,10 +7,10 @@ import hashlib
 import json
 
 # MongoDB connection string
-MONGODB_URI = "mongodb+srv://jaibajarangclasses:Government90@@cluster0.8vgnq.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+MONGO_URI = "mongodb+srv://jaibajarangclasses:Government90@@cluster0.8vgnq.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 
 def get_collection(bot_name, mongo_uri):
-    client = MongoClient(MONGODB_URI)
+    client = MongoClient(MONGO_URI)
 
     # Send a ping to confirm a successful connection
     try:
