@@ -18,37 +18,44 @@ from pyrogram import Client, filters
 from pyrogram.types import Message
 from pyrogram.errors import FloodWait
 from pyrogram.errors.exceptions.bad_request_400 import StickerEmojiInvalid
-from pyrogram.types.messages_and_media import message
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
 from bs4 import BeautifulSoup
 from logs import get_last_two_minutes_logs
 import tempfile
-from db import get_collection, save_name, load_name, save_log_channel_id, load_log_channel_id, save_authorized_users, load_authorized_users, load_allowed_channel_ids, save_allowed_channel_ids, load_accept_logs, save_accept_logs # Import the database functions
-from db import save_bot_running_time, load_bot_running_time, reset_bot_running_time, save_max_running_time, load_max_running_time
-from db import save_queue_file, load_queue_file
+from db import (
+    get_collection, save_name, load_name, save_log_channel_id, load_log_channel_id,
+    save_authorized_users, load_authorized_users, load_allowed_channel_ids,
+    save_allowed_channel_ids, load_accept_logs, save_accept_logs, save_bot_running_time,
+    load_bot_running_time, reset_bot_running_time, save_max_running_time, load_max_running_time,
+    save_queue_file, load_queue_file
+)
 from PIL import Image
-from pytube import Playlist  #Youtube Playlist Extractor
+from pytube import Playlist  # YouTube Playlist Extractor
 from yt_dlp import YoutubeDL
 import yt_dlp as youtube_dl
 import cloudscraper
+
 # Initialize bot
-bot = Client("bot",
-             bot_token=7286340326:AAEyXhzyOYarXiv5wHMpm0Z1VEHujcOdNk0,
-             api_id=21705536,
-             api_hash=c5bb241f6e3ecf33fe68a444e288de2d)
+bot = Client(
+    "bot",
+    bot_token=7286340326:AAEyXhzyOYarXiv5wHMpm0Z1VEHujcOdNk0,
+    api_id=21705536,
+    api_hash=c5bb241f6e3ecf33fe68a444e288de2d
+)
 
 # Get the MongoDB collection for this bot
 collection = get_collection(BOT_NAME, MONGO_URI)
+
 # Constants
 OWNER_IDS = [5957208798]  # Replace with the actual owner user IDs
+cookies_file_path = "cookies.txt"
 
-cookies_file_path = "modules/cookies.txt"
 # Global variables
 log_channel_id = 1002351323436
 authorized_users = []
 ALLOWED_CHANNEL_IDS = []
 my_name = "𝕰𝖓𝖌𝖎𝖓𝖊𝖊𝖗𝖘 𝕭𝖆𝖇𝖚"
-overlay = None 
+overlay = None
 accept_logs = 0
 bot_running = False
 start_time = None
@@ -59,14 +66,13 @@ file_queue = []
 # Load initial data from files
 def load_initial_data():
     global log_channel_id, authorized_users, ALLOWED_CHANNEL_IDS, my_name, accept_logs
-    global total_running_time, max_running_time
-  
+    global total_running_time, max_running_time, file_queue
+
     log_channel_id = load_log_channel_id(collection)
     authorized_users = load_authorized_users(collection)
     ALLOWED_CHANNEL_IDS = load_allowed_channel_ids(collection)
     my_name = load_name(collection)
     accept_logs = load_accept_logs(collection)
-    # Load bot running time and max running time
     total_running_time = load_bot_running_time(collection)
     max_running_time = load_max_running_time(collection)
     file_queue = load_queue_file(collection)
@@ -85,10 +91,7 @@ auth_or_owner_filter = filters.create(lambda _, __, m: auth_user_filter(_, __, m
 auth_owner_channel_filter = filters.create(lambda _, __, m: auth_user_filter(_, __, m) or owner_filter(_, __, m) or channel_filter(_, __, m))
 owner_or_channel_filter = filters.create(lambda _, __, m: owner_filter(_, __, m) or channel_filter(_, __, m))
 
-
-#===================== Callback query handler ===============================
-
-# Callback query handler for help button
+# Callback query handlers
 @bot.on_callback_query(filters.regex("help") & auth_or_owner_filter)
 async def help_callback(client: Client, query: CallbackQuery):
     await help_command(client, query.message)
@@ -101,7 +104,7 @@ async def show_channels_callback(client: Client, query: CallbackQuery):
 async def remove_chat_callback(client: Client, query: CallbackQuery):
     await remove_channel(client, query.message)
 
-#====================== Command handlers ========================================
+# Command handlers
 @bot.on_message(filters.command("add_log_channel") & filters.create(owner_filter))
 async def add_log_channel(client: Client, message: Message):
     global log_channel_id
@@ -180,7 +183,6 @@ async def show_channels(client: Client, message: Message):
         await message.reply(f"Allowed channels:\n{channels_list}")
     else:
         await message.reply("No channels are currently allowed.")
-
 
 # Add Chat Callback
 @bot.on_callback_query(filters.regex("add_chat") & auth_or_owner_filter)
@@ -290,8 +292,6 @@ async def watermark_command(client: Client, message: Message):
 
 # Function to check if an image has transparency
 def has_transparency(image_path):
-    # Implement logic to check for transparency
-    # For example, using PIL library:
     from PIL import Image
     try:
         image = Image.open(image_path)
@@ -303,15 +303,11 @@ def has_transparency(image_path):
 
 # Function to convert image to PNG format
 async def convert_to_png(image_path):
-    # Implement logic to convert image to PNG format
-    # For example, using PIL library:
     from PIL import Image
     try:
         image = Image.open(image_path)
-        # Create a new image with an alpha channel (transparency)
         new_image = Image.new("RGBA", image.size)
         new_image.paste(image, (0, 0), image)
-        # Save the image as PNG
         png_path = image_path.replace(".jpg", ".png")
         new_image.save(png_path)
         return png_path
@@ -365,6 +361,7 @@ class Data:
     START = (
         "🌟 Welcome {0}! 🌟\n\n"
     )
+
 # Define the start command handler
 @bot.on_message(filters.command("start"))
 async def start(client: Client, msg: Message):
@@ -420,7 +417,6 @@ async def start(client: Client, msg: Message):
         )
 
 @bot.on_message(filters.command(["stop"]) & auth_or_owner_filter)
-#@bot.on_message(filters.command("stop"))
 async def stop_handler(_, message):
     global bot_running, start_time
     if bot_running:
@@ -431,24 +427,19 @@ async def stop_handler(_, message):
     else:
         await message.reply_text("Bot is not running.", True)
 
-
 @bot.on_message(filters.command("check") & filters.create(owner_filter))
 async def owner_command(bot: Client, message: Message):
     global OWNER_TEXT
     await message.reply_text(OWNER_TEXT)
-
 
 # Help command handler
 @bot.on_message(filters.command("help") & auth_owner_channel_filter)
 async def help_command(client: Client, message: Message):
     await message.reply(help_text, reply_markup=keyboard)
 
-
 #=================== TELEGRAM ID INFORMATION =============
-
 @bot.on_message(filters.private & filters.command("info"))
 async def info(bot: Client, update: Message):
-    
     text = f"""--**Information**--
 
 **🙋🏻‍♂️ First Name :** {update.from_user.first_name}
@@ -462,7 +453,6 @@ async def info(bot: Client, update: Message):
         disable_web_page_preview=True,
         reply_markup=BUTTONS
     )
-
 
 @bot.on_message(filters.private & filters.command("id"))
 async def id(bot: Client, update: Message):
@@ -479,7 +469,6 @@ async def id(bot: Client, update: Message):
         )  
 
 #==========================  YOUTUBE EXTRACTOR =======================
-
 @bot.on_message(filters.command('youtube') & auth_or_owner_filter)
 async def run_bot(client: Client, message: Message):
     await message.delete()
@@ -514,16 +503,9 @@ async def run_bot(client: Client, message: Message):
 
 def get_playlist_videos(playlist_url):
     try:
-        # Create a Playlist object
         playlist = Playlist(playlist_url)
-        
-        # Get the playlist title
         playlist_title = playlist.title
-        
-        # Initialize an empty dictionary to store video names and links
         videos = {}
-        
-        # Iterate through the videos in the playlist
         for video in playlist.videos:
             try:
                 video_title = video.title
@@ -531,7 +513,6 @@ def get_playlist_videos(playlist_url):
                 videos[video_title] = video_url
             except Exception as e:
                 logging.error(f"Could not retrieve video details: {e}")
-        
         return playlist_title, videos
     except Exception as e:
         logging.error(f"An error occurred: {e}")
@@ -563,12 +544,10 @@ def get_all_videos(channel_url):
             return None, None
 
 def save_to_file(video_links, channel_name):
-    # Sanitize the channel name to be a valid filename
     sanitized_channel_name = re.sub(r'[^\w\s-]', '', channel_name).strip().replace(' ', '_')
     filename = f"{sanitized_channel_name}.txt"    
     with open(filename, 'w', encoding='utf-8') as file:
         for number, (title, url) in video_links.items():
-            # Ensure the URL is formatted correctly
             if url.startswith("https://"):
                 formatted_url = url
             elif "shorts" in url:
@@ -579,62 +558,59 @@ def save_to_file(video_links, channel_name):
     return filename
 
 #================== TEXT FILE EDITOR =============================
-
 @bot.on_message(filters.command('h2t'))
 async def run_bot(bot: Client, m: Message):
-        editable = await m.reply_text(" **Send Your HTML file**\n")
-        input: Message = await bot.listen(editable.chat.id)
-        html_file = await input.download()
-        await input.delete(True)
-        await editable.delete()
-        with open(html_file, 'r') as f:
-            soup = BeautifulSoup(f, 'html.parser')
-            tables = soup.find_all('table')
-            videos = []
-            for table in tables:
-                rows = table.find_all('tr')
-                for row in rows:
-                    cols = row.find_all('td')
-                    name = cols[0].get_text().strip()
-                    link = cols[1].find('a')['href']
-                    videos.append(f'{name}:{link}')
-        txt_file = os.path.splitext(html_file)[0] + '.txt'
-        with open(txt_file, 'w') as f:
-            f.write('\n'.join(videos))
-        await m.reply_document(document=txt_file,caption="Here is your txt file.")
-        os.remove(txt_file)
+    editable = await m.reply_text(" **Send Your HTML file**\n")
+    input: Message = await bot.listen(editable.chat.id)
+    html_file = await input.download()
+    await input.delete(True)
+    await editable.delete()
+    with open(html_file, 'r') as f:
+        soup = BeautifulSoup(f, 'html.parser')
+        tables = soup.find_all('table')
+        videos = []
+        for table in tables:
+            rows = table.find_all('tr')
+            for row in rows:
+                cols = row.find_all('td')
+                name = cols[0].get_text().strip()
+                link = cols[1].find('a')['href']
+                videos.append(f'{name}:{link}')
+    txt_file = os.path.splitext(html_file)[0] + '.txt'
+    with open(txt_file, 'w') as f:
+        f.write('\n'.join(videos))
+    await m.reply_document(document=txt_file, caption="Here is your txt file.")
+    os.remove(txt_file)
 
 @bot.on_message(filters.command('remtitle'))
 async def run_bot(bot: Client, m: Message):
-      editable = await m.reply_text("**Send Your TXT file with links**\n")
-      input: Message = await bot.listen(editable.chat.id)
-      txt_file = await input.download()
-      await input.delete(True)
-      await editable.delete()
-      
-      with open(txt_file, 'r') as f:
-          lines = f.readlines()
-      
-      cleaned_lines = [line.replace('(', '').replace(')', '') for line in lines]
-      
-      cleaned_txt_file = os.path.splitext(txt_file)[0] + '_cleaned.txt'
-      with open(cleaned_txt_file, 'w') as f:
-          f.write(''.join(cleaned_lines))
-      
-      await m.reply_document(document=cleaned_txt_file,caption="Here is your cleaned txt file.")
-      os.remove(cleaned_txt_file)
+    editable = await m.reply_text("**Send Your TXT file with links**\n")
+    input: Message = await bot.listen(editable.chat.id)
+    txt_file = await input.download()
+    await input.delete(True)
+    await editable.delete()
+    
+    with open(txt_file, 'r') as f:
+        lines = f.readlines()
+    
+    cleaned_lines = [line.replace('(', '').replace(')', '') for line in lines]
+    
+    cleaned_txt_file = os.path.splitext(txt_file)[0] + '_cleaned.txt'
+    with open(cleaned_txt_file, 'w') as f:
+        f.write(''.join(cleaned_lines))
+    
+    await m.reply_document(document=cleaned_txt_file, caption="Here is your cleaned txt file.")
+    os.remove(cleaned_txt_file)
 
 def process_links(links):
     processed_links = []
-    
     for link in links.splitlines():
         if "m3u8" in link:
             processed_links.append(link)
         elif "mpd" in link:
-            # Remove everything after and including '*'
             processed_links.append(re.sub(r'\*.*', '', link))
-    
     return "\n".join(processed_links)
+
 @bot.on_message(filters.command('studyiqeditor'))
 async def run_bot(bot: Client, m: Message):
     editable = await m.reply_text("**Send Your TXT file with links**\n")
@@ -654,8 +630,8 @@ async def run_bot(bot: Client, m: Message):
     
     await m.reply_document(document=processed_txt_file, caption="Here is your processed txt file.")
     os.remove(processed_txt_file)   
-#================= BOT RUNNING TIME =============================
 
+#================= BOT RUNNING TIME =============================
 @bot.on_message(filters.command("bot_running_time") & auth_or_owner_filter)
 async def bot_running_time_handler(_, message):
     global total_running_time, max_running_time
@@ -690,28 +666,21 @@ async def set_max_running_time_handler(_, message):
     else:
         await message.reply_text("❌ Invalid command. Use /set_max_running_time <hours>")
 
-
 #=================== TXT CALLING COMMAND ==========================
-
 @bot.on_message(filters.command(["txt"]) & auth_or_owner_filter)
 async def luminant_command(bot: Client, m: Message):
     global bot_running, start_time, total_running_time, max_running_time
     global log_channel_id, my_name, overlay, accept_logs
     await m.delete()
-    # Store the chat ID where the command was initiated
     chat_id = m.chat.id
     if bot_running:
-        # If the process is already running, ask the user if they want to queue their request
         running_message = await m.reply_text("⚙️ Process is already running. Do you want to queue your request? (yes/no)")
-
-        # Listen for user's response
         input_queue: Message = await bot.listen(chat_id)
         response = input_queue.text.strip().lower()
         await input_queue.delete()
         await running_message.delete()
 
         if response != "yes":
-            # If user doesn't want to queue, return without further action
             await m.reply_text("Process not queued. Exiting command.")
             return
 
@@ -737,7 +706,7 @@ async def luminant_command(bot: Client, m: Message):
         except:
             await m.reply_text("Invalid file input.🥲")
             os.remove(x)
-            bot_running = False  # Set bot_running to False for invalid file input
+            bot_running = False
             return
     else:
         content = input.text
@@ -746,15 +715,11 @@ async def luminant_command(bot: Client, m: Message):
         for i in content:
             links.append(i.split("://", 1))
 
-    #===================== IF ELSE ========================
-
     await editable.edit(f"🔍 **Do you want to set all values as Default?\nIf YES then type `df` otherwise `no`** ✨")
     input5: Message = await bot.listen(chat_id)
     raw_text5 = input5.text
     await input5.delete(True)
 
-
-#===============================================================
     if raw_text5 == "df":
         await editable.edit("**📝 Enter the Batch Name or type `df` to use the text filename:**")
         input1 = await bot.listen(chat_id)
@@ -776,12 +741,8 @@ async def luminant_command(bot: Client, m: Message):
         raw_text4 = "df"
         thumb = "no"
       
-        await editable.delete()  # Ensure the prompt message is deleted
+        await editable.delete()
     else:
-
-
-    #===================== Batch Name =====================
-
         await editable.edit(f"Total links found are **{len(links)}**\n\nSend From where you want to download initial is **1**")
         input0: Message = await bot.listen(chat_id)
         raw_text = input0.text.strip()
@@ -800,17 +761,14 @@ async def luminant_command(bot: Client, m: Message):
         else:
             b_name = raw_text0
 
-    #===================== Title Name =====================
-
         await editable.edit(f"🔍 **Do you want to enable the Title Feature? Reply with `YES` or `df`** ✨")
         input4: Message = await bot.listen(chat_id)
         raw_text4 = input4.text
         await input4.delete(True)
 
-    #===================== QUALITY =================================
         await editable.edit("**Enter resolution:**\n\n144\n240\n360\n480\n720\n1080\n1440\n2160\n4320\n\n**Please Choose Quality**\n\nor Send `df` for default Quality\n\n")
         input2: Message = await bot.listen(chat_id)
-        if input2.text.lower() == "df": # Check if the input is "df" (case-insensitive)
+        if input2.text.lower() == "df":
             raw_text2 = "720"
         else:
             raw_text2 = input2.text
@@ -847,7 +805,6 @@ async def luminant_command(bot: Client, m: Message):
             CR = 'ᡕᠵ᠊ᡃ່࡚ࠢ࠘ ⸝່ࠡࠣ᠊߯᠆ࠣ࠘ᡁࠣ࠘᠊᠊ࠢ࠘𐡏 —͟͞͞ ℝịcị𐌽!'
         else:
             CR = raw_text3    
-        # Asking for thumbnail
         await editable.edit("Now upload the **Thumbnail Image** or send `no` or `df` for default thumbnail 🖼️")
         input6 = await bot.listen(chat_id)
 
@@ -865,11 +822,9 @@ async def luminant_command(bot: Client, m: Message):
         await input6.delete(True)
         await editable.delete()
     
-    # Initialize count and end_count
     count = 1
     end_count = None
 
-    # Determine the range or starting point
     if '-' in raw_text:
         try:
             start, end = map(int, raw_text.split('-'))
@@ -898,7 +853,6 @@ async def luminant_command(bot: Client, m: Message):
 
     try:
         await process_file(bot, m, links, b_name, count, end_count, raw_text2, res, CR, raw_text4, thumb, log_channel_id, my_name, overlay, accept_logs, collection)
-    
     except Exception as e:
         await m.reply_text(e)
 
@@ -913,7 +867,6 @@ async def process_file(bot, m, links, b_name, count, end_count, raw_text2, res, 
             f"**•File name** - `{b_name}`\n**•Total Links Found In TXT** - `{len(links)}`\n**•RANGE** - `({count}-{end_count})`\n**•Resolution** - `{res}({raw_text2})`\n**•Caption** - **{CR}**\n**•Thumbnail** - **{thumb}**"
         )
         
-        # Check if the bot is already running
         if bot_running:
             file_queue_data = {
                 'm': m,
@@ -931,10 +884,9 @@ async def process_file(bot, m, links, b_name, count, end_count, raw_text2, res, 
                 'overlay': overlay,
                 'accept_logs': accept_logs
             }
-            file_queue.append(file_queue_data)  # Add file data to queue
+            file_queue.append(file_queue_data)
             save_queue_file(collection, file_queue)
             await m.reply_text("Bot is currently running. Your file is queued for processing.")
-        
         else:
             bot_running = True
             await process_links(bot, m, links, b_name, count, end_count, raw_text2, res, CR, raw_text4, thumb, log_channel_id, my_name, overlay, accept_logs)
@@ -942,8 +894,8 @@ async def process_file(bot, m, links, b_name, count, end_count, raw_text2, res, 
 
     except Exception as e:
         msg = await m.reply_text("⚙️ Process will automatically start after completing the current one.")
-        await asyncio.sleep(10)  # Wait for 10 seconds
-        await msg.delete()  # Delete the message
+        await asyncio.sleep(10)
+        await msg.delete()
 
 async def handle_queue(bot, m, collection):
     global bot_running
@@ -956,19 +908,17 @@ async def handle_queue(bot, m, collection):
         except Exception as e:
             await m.reply_text(str(e))
     
-    # Reset bot running status after all queued processes are completed
     bot_running = False
+    start_time = None
 
 async def process_links(bot, m, links, b_name, count, end_count, raw_text2, res, CR, raw_text4, thumb, log_channel_id, my_name, overlay, accept_logs):
-    # Your logic for processing links goes here
     global start_time, total_running_time, max_running_time
 
     total_running_time = load_bot_running_time(collection)
     max_running_time = load_max_running_time(collection)
-    # Handle the case where only one link or starting from the first link
+
     if count == 1:
         chat_id = m.chat.id
-        #========================= PINNING THE BATCH NAME ======================================
         batch_message: Message = await bot.send_message(chat_id, f"**{b_name}**")
         
         try:
@@ -976,7 +926,7 @@ async def process_links(bot, m, links, b_name, count, end_count, raw_text2, res,
             message_link = batch_message.link
         except Exception as e:
             await bot.send_message(chat_id, f"Failed to pin message: {str(e)}")
-            message_link = None  # Fallback value
+            message_link = None
 
         message_id = batch_message.id 
         pinning_message_id = message_id + 1
@@ -1013,13 +963,12 @@ async def process_links(bot, m, links, b_name, count, end_count, raw_text2, res,
         start_time = time.time()
 
         if len(links[i]) != 2 or not links[i][1]:
-            # If the link is empty or not properly formatted, continue to the next iteration
             name1 = links[i][0].replace("\t", "").replace(":", "").replace("/", "").replace("+", "").replace("#", "").replace("|", "").replace("@", "").replace("*", "").replace(".", "").replace("https", "").replace("http", "").strip()
             name = f'{str(count).zfill(3)}) {name1[:60]} - {my_name}'
             await m.reply_text(f"No link found for **{name}**.")
             continue
         try:
-            V = links[i][1].replace("file/d/","uc?export=download&id=").replace("www.youtube-nocookie.com/embed", "youtu.be").replace("?modestbranding=1", "").replace("/view?usp=sharing","") # .replace("mpd","m3u8")
+            V = links[i][1].replace("file/d/","uc?export=download&id=").replace("www.youtube-nocookie.com/embed", "youtu.be").replace("?modestbranding=1", "").replace("/view?usp=sharing","")
             url = "https://" + V
 
             if "visionias" in url:
@@ -1051,28 +1000,16 @@ async def process_links(bot, m, links, b_name, count, end_count, raw_text2, res,
             else:
                 ytf = f"b[height<={raw_text2}]/bv[height<={raw_text2}]+ba/b/bv+ba"
 
-
             if "jw-prod" in url and (url.endswith(".mp4") or "Expires=" in url):
                 cmd = f'yt-dlp -o "{name}.mp4" "{url}"'
-
-            #if "jw-prod" in url and (url.endswith(".mp4") or "Expires=" in url):
-                #user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"             
-                #cmd = f'yt-dlp -o "{name}.mp4" --user-agent "{user_agent}" "{url}"'
-
             else:
                 cmd = f"yt-dlp --verbose -f '{ytf}' '{url}' -o '{name}.mp4' --no-check-certificate --retry 5 --retries 10 --concurrent-fragments 8"
-                #cmd = f"yt-dlp --verbose --cookies '{cookies_file_path}' -f '{ytf}' '{url}' -o '{name}.mp4' --concurrent-fragments 8"
 
-
-#===============================================================
             if raw_text4 == "YES":
-                # Check the format of the link to extract video name and topic name accordingly
                 if links[i][0].startswith("("):
-                    # Extract the topic name for format: (TOPIC) Video Name:URL
                     t_name = re.search(r"\((.*?)\)", links[i][0]).group(1).strip().upper()
                     v_name = re.search(r"\)\s*(.*?):", links[i][0]).group(1).strip()
                 else:
-                    # Extract the topic name for format: Video Name (TOPIC):URL
                     t_name = re.search(r"\((.*?)\)", links[i][0]).group(1).strip().upper()
                     v_name = links[i][0].split("(", 1)[0].strip()
 
@@ -1103,7 +1040,6 @@ async def process_links(bot, m, links, b_name, count, end_count, raw_text2, res,
                 try:
                     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'}
                     if "encrypted" in url:
-                        # Handle encrypted PDF URLs differently if needed
                         async with aiohttp.ClientSession(headers=headers) as session:
                             async with session.get(url) as response:
                                 if response.status == 200:
@@ -1159,9 +1095,6 @@ async def process_links(bot, m, links, b_name, count, end_count, raw_text2, res,
                     os.system(download_cmd)
                     cc2 = f'**[🎵] Audio_ID : {str(count).zfill(3)}**\n**𝑭𝒊𝒍𝒆 𝑵𝒂𝒎𝒆** : {name1}\n\n**𝑩𝒂𝒕𝒄𝒉 𝑵𝒂𝒎𝒆** : {b_name}\n\n**𝑫𝒐𝒘𝒏𝒍𝒐𝒂𝒅𝒆𝒅 𝑩𝒚 : {CR}**'
                     await bot.send_document(chat_id=m.chat.id, document=f'{name}.{ext}', caption=cc2)
-                    #if accept_logs == 1:  
-                        #file_id = message.document.file_id
-                        #await bot.send_document(chat_id=log_channel_id, document=file_id, caption=cc2)
                     count += 1
                     os.remove(f'{name}.{ext}')
                 except FloodWait as e:
@@ -1308,39 +1241,20 @@ async def process_links(bot, m, links, b_name, count, end_count, raw_text2, res,
         await bot.send_message(log_channel_id, f"{end_message}")
     await m.reply_text("That's it ❤️")
 
-
 #===================== TEXT MESSAGES THAT BOT WILL SEND ===============
-
 help_text = """
-
 🤖 **Welcome to Bot Commands and Usage Guide!**
 
 🔑 **Allowed Channels Commands:**
 
 1. **/show_channels** - 📺 Display the list of allowed channels.
-
 2. **/add_channel `<-100channelid>`** - ➕ Add a channel to the allowed channels list.
-
- **Example:**
- ```
- /add_channel -100973847334
- ```
-OR Use /add_chat 
-
 3. **/remove_channel `<-100channelid>`** - ➖ Remove a channel from the allowed channels list.
-
- **Example:**
- ```
- /remove_channel -1003947384
- ```
-OR Use /remove_chat
 
 🚀 **General Commands:**
 
 4. **/ricin** - 💡 Type this before sending your **📃.txt** file.
-
 5. **/start** - 📛 Start the bot and receive a welcome message.
-
 6. **/stop** - 🛑 Stop the bot.
 
 🌟 **Bot Running Time:**
@@ -1350,11 +1264,8 @@ OR Use /remove_chat
 🪓 **Txt Extractor and Editor Commands:**
 
 8. **/youtube** - 🎥 Convert a YouTube URL to a .txt file.
-
 9. **/remtitle** - ✂️ Remove extra parentheses from the .txt file.
-
 10. **/h2t** - 🔄 Convert your .html file to a .txt file.
-
 11. **/studyiqeditor** - 📝 Convert your studyiq file.
 
 💊 **Powerful Pill**
@@ -1366,96 +1277,48 @@ OR Use /remove_chat
 Feel free to contact @siteofhacking for further assistance or subscription details.
 
 ✨ Have fun and happy chatting! ✨
-
 """
 
-
 OWNER_TEXT = """
-
 🤖 **Welcome to Bot Commands and Usage Guide!**
 
 📝 **Owner Commands:**
 
 1. **/add_log_channel `<-100channelid>`** - 📁 Set the log channel ID.
-
-**Example:**
-```
-/add_log_channel -10054567890
-```
-
 2. **/accept_logs** - 📥 Set this to **1** if you want the backup.
-
 3. **/logs** - 📝 Send the logs from the last two minutes.
-
 4. **/watermark** - 🌊 Add a custom watermark to your video.
-
 5. **/name** - 🏷️ Set a custom name that you want to display before the file extension.
-
-**Example:**
-```
-/name yourname
-```
 
 🔒 **Authorized Users Commands:**
 
 6. **/auth_users** - 👥 Display the list of authorized users.
-
 7. **/add_auth `<userID>`** - ➕ Add a user to the authorized users list.
-
-**Example:**
-```
-/add_auth 3495890
-```
-
 8. **/remove_auth `<userID>`** - ➖ Remove a user from the authorized users list.
-
-**Example:**
-```
-/remove_auth 3957994
-```
 
 🔑 **Allowed Channels Commands:**
 
 9. **/show_channels** - 📺 Display the list of allowed channels.
-
 10. **/add_channel `<-100channelid>`** - ➕ Add a channel to the allowed channels list.
-
- **Example:**
- ```
- /add_channel -100973847334
- ```
-
 11. **/remove_channel `<-100channelid>`** - ➖ Remove a channel from the allowed channels list.
-
- **Example:**
- ```
- /remove_channel -1003947384
- ```
 
 🚀 **General Commands:**
 
 12. **/ricin** - 💡 Type this before sending your **📃.txt** file.
-
 13. **/start** - 📛 Start the bot and receive a welcome message.
-
 14. **/stop** - 🛑 Stop the bot.
 
 🌟 **Bot Running Time:**
 
 15. **/bot_running_time** - ⏲️ Check the total running time of your bot.
-
 16. **/reset_bot_running_time `<hours>`** - 🔄 Reset bot running time to specific hours.
-
 17. **/set_max_running_time `<hours>`** - ⏳ Set maximum bot running time.
 
 ⛏️ **Txt Extractor and Editor Commands:**
 
 18. **/youtube** - 🎥 Convert a YouTube URL to a .txt file.
-
 19. **/remtitle** - ✂️ Remove extra parentheses from the .txt file.
-
 20. **/h2t** - 🔄 Convert your .html file to a .txt file.
-
 21. **/studyiqeditor** - 📝 Convert your studyiq file.
 
 💊 **Powerfull Pill**
@@ -1467,16 +1330,12 @@ OWNER_TEXT = """
 Feel free to contact @siteofhacking for further assistance or subscription details.
 
 ✨ Have fun and happy chatting! ✨
-
 """
-
 
 #============== Load initial data on startup =========================
 load_initial_data()
 
 #====================== Inline keyboard buttons =======================
-
-#========== Button showed on start command ==========
 help_button_keyboard = InlineKeyboardMarkup(
     [
         [
@@ -1485,10 +1344,6 @@ help_button_keyboard = InlineKeyboardMarkup(
     ]
 )
 
-
-#========== Button showed on help command =============
-
-# Inline keyboard
 keyboard = InlineKeyboardMarkup(
     [
         [
@@ -1498,8 +1353,6 @@ keyboard = InlineKeyboardMarkup(
         ]
     ]
 )
-
-#================== id command button ===========================
 
 BUTTONS = InlineKeyboardMarkup([[InlineKeyboardButton(text="Send Here", url=f"https://t.me/siteofhacking")]])
 
