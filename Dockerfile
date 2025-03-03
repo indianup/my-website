@@ -1,5 +1,5 @@
 # Use a base image with Python pre-installed
-FROM python:3.9-slim
+FROM python:3.10.8-slim-buster
 
 # Set the working directory in the container
 WORKDIR /app
@@ -24,4 +24,4 @@ COPY . .
 EXPOSE 8989
 
 # Run a simple HTTP server in the background to pass health checks and the main Python script
-CMD python3 -m http.server 8989 & python3 modules/main.py
+CMD python3 -m http.server 8989 & python3 main.py
