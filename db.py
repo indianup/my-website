@@ -6,8 +6,11 @@ from pymongo import errors
 import hashlib
 import json
 
+# MongoDB connection string
+MONGODB_URI = "mongodb+srv://jaibajarangclasses:Government90@@cluster0.8vgnq.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+
 def get_collection(bot_name, mongo_uri):
-    client = MongoClient(mongodb+srv://jaibajarangclasses:Government90@@cluster0.8vgnq.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0)
+    client = MongoClient(MONGODB_URI)
 
     # Send a ping to confirm a successful connection
     try:
