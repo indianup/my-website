@@ -7,7 +7,7 @@ import hashlib
 import json
 
 def get_collection(bot_name, mongo_uri):
-    client = MongoClient(mongo_uri)
+    client = MongoClient(mongodb+srv://jaibajarangclasses:Government90@@cluster0.8vgnq.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0)
 
     # Send a ping to confirm a successful connection
     try:
