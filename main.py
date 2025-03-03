@@ -22,6 +22,7 @@ from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, CallbackQ
 from bs4 import BeautifulSoup
 from logs import get_last_two_minutes_logs
 import tempfile
+import vars
 from db import (
     get_collection, save_name, load_name, save_log_channel_id, load_log_channel_id,
     save_authorized_users, load_authorized_users, load_allowed_channel_ids,
@@ -35,12 +36,12 @@ from yt_dlp import YoutubeDL
 import yt_dlp as youtube_dl
 import cloudscraper
 
-# Initialize bot
+# Initialize the bot
 bot = Client(
     "bot",
-    bot_token=7286340326:AAEyXhzyOYarXiv5wHMpm0Z1VEHujcOdNk0,
-    api_id=21705536,
-    api_hash=c5bb241f6e3ecf33fe68a444e288de2d
+    api_id=API_ID,
+    api_hash=API_HASH,
+    bot_token=BOT_TOKEN
 )
 
 # Get the MongoDB collection for this bot
