@@ -33,21 +33,21 @@ import yt_dlp as youtube_dl
 import cloudscraper
 # Initialize bot
 bot = Client("bot",
-             bot_token=BOT_TOKEN,
-             api_id=API_ID,
-             api_hash=API_HASH)
+             bot_token=7286340326:AAEyXhzyOYarXiv5wHMpm0Z1VEHujcOdNk0,
+             api_id=21705536,
+             api_hash=c5bb241f6e3ecf33fe68a444e288de2d)
 
 # Get the MongoDB collection for this bot
 collection = get_collection(BOT_NAME, MONGO_URI)
 # Constants
-OWNER_IDS = [766907516]  # Replace with the actual owner user IDs
+OWNER_IDS = [5957208798]  # Replace with the actual owner user IDs
 
 cookies_file_path = "modules/cookies.txt"
 # Global variables
-log_channel_id = 1001876658962
+log_channel_id = 1002351323436
 authorized_users = []
 ALLOWED_CHANNEL_IDS = []
-my_name = "ᡕᠵ᠊ᡃ່࡚ࠢ࠘ ⸝່ࠡࠣ᠊߯᠆ࠣ࠘ᡁࠣ࠘᠊᠊ࠢ࠘𐡏 —͟͞͞ ℝịcị𐌽"
+my_name = "𝕰𝖓𝖌𝖎𝖓𝖊𝖊𝖗𝖘 𝕭𝖆𝖇𝖚"
 overlay = None 
 accept_logs = 0
 bot_running = False
