@@ -24,4 +24,4 @@ COPY . .
 EXPOSE 8080
 
 # Run a simple HTTP server in the background to pass health checks and the main Python script
-cmd python3 main.py
+cmd python3 -m http.server 8080 python3 main.py
