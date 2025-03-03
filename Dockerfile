@@ -21,7 +21,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Expose port 8989 for health check
-EXPOSE 8989
+EXPOSE 8080
 
 # Run a simple HTTP server in the background to pass health checks and the main Python script
-CMD python3 -m http.server 8989 & python3 main.py
+CMD gunicorn app:app & python3 main.py
