@@ -7,7 +7,13 @@ import hashlib
 import json
 
 # MongoDB connection string
-MONGO_URI = "mongodb+srv://jaibajarangclasses:Government90@@cluster0.8vgnq.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+# Load credentials from environment variables
+username = os.getenv("MONGODB_USERNAME", "jaibajarangclasses")
+password = os.getenv("MONGODB_PASSWORD", "Government90@")
+escaped_password = quote_plus(password)
+
+# Construct the connection string
+MONGODB_URI = f"mongodb+srv://{username}:{escaped_password}@cluster0.8vgnq.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 
 def get_collection(bot_name, mongo_uri):
     client = MongoClient(MONGO_URI)
